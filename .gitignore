@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Environment files
+tests/.env
+.env.local
+.env.production
+.env
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+.mcp-venv/
+
+# Obsidian
+obsidian/
+.obsidian/
+
+# Claude
+claude/
+.claude/
+
+# IDE
+.venv/
+.idea/
+*.pyc
+.trash
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+
+# Logs
+cache/
+logs/
+*.log
+
+# API keys and secrets
+*api_key*
+*api_secret*
+secrets/
+credentials/
+config/google-sheets.json
+
+# Poetry
+*.lock
+
+# Data
+data/trading.db
+data/wal/signals.wal
+
+*.parquet
+*.csv
+*.xlsx
+
+# Claude
+CLAUDE.md
+
+# Trading specific
+positions.json
+orders.json
+trades.json
+pnl_*.json
+state.json
+
+# Results
+results/
+
+nul
