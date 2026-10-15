@@ -82,6 +82,43 @@ poetry run python scripts/monte_carlo_analysis.py logs/backtest/trades_XXXX.csv 
 
 ---
 
+## `book_risk_report.py` — risk anatomy of a multi-strategy book
+
+Drawdown under three denominators, IID vs block-bootstrap Monte Carlo on trades
+and days, drift in the mean, diversification and joint losses, attribution of the
+worst episode, window dependence, daily VaR/ES and PnL by forecast-volatility
+quintile. Companion to [`docs/writeups/03-book-risk.md`](../docs/writeups/03-book-risk.md).
+
+```bash
+poetry run python scripts/book_risk_report.py logs/backtest/trades_XXXX.csv \
+  --sizing 1200 --balance 3000 --prices data/XAUUSD_1m.csv
+```
+
+- `--sizing` → capital positions are sized on (the balance cap); drawdowns are reported in % of it.
+- `--prices` → optional 1m OHLC CSV for the volatility-quintile table.
+
+---
+
+## `var_backtest.py` — one-day VaR / ES model backtest
+
+Builds daily returns and 5-minute realised variance from 1-minute bars, forecasts
+VaR99, VaR97.5 and ES97.5 with six models (`src/research/var.py`) and runs the
+Kupiec, Christoffersen, ES-exceedance and Basel traffic-light tests. Companion to
+[`docs/writeups/04-gold-var.md`](../docs/writeups/04-gold-var.md).
+
+```bash
+# per-contract futures bars (symbol, timestamp, close, volume) -> roll-free returns
+poetry run python scripts/var_backtest.py --contracts "data/gc_parts/*.parquet" --side long
+# one continuous spot/CFD series
+poetry run python scripts/var_backtest.py --bars data/XAUUSD_1m.csv --side short
+```
+
+- `--side` → `long` (loss = falling price) or `short`.
+- `--drop-last` → drop a partial final trading day; `--save` → write the forecasts to CSV.
+- Needs at least ~2 years of data: forecasts start after a 500-day warm-up.
+
+---
+
 ## `exposure_analysis.py` — peak exposure / effective leverage
 
 Walks a trades CSV and reports peak concurrent notional and effective leverage

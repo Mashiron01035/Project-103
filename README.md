@@ -8,21 +8,36 @@ to separate edge from overfit, an execution-accurate backtest engine, and the
 live-trading runtime that runs the same strategy code against MetaTrader 5 and
 Bybit. Most of the work is on gold (XAUUSD) at 1-minute and tick resolution.
 
+## Papers
+
+The research is the main point of this repository; the code exists to make it
+reproducible. Published papers (Zenodo):
+
+| Paper | Finding | DOI |
+|---|---|---|
+| The London Gold Fix Drift | Gold drifts down into the LBMA morning fix, a short-lived scheduled effect that survives 17 years of COMEX futures net of costs | [10.5281/zenodo.23398616](https://doi.org/10.5281/zenodo.23398616) |
+| Precious Metals Rally into the Weekend Close | Gold and silver rise before the CME close, and the effect grows with the length of the closure ahead | [10.5281/zenodo.23400424](https://doi.org/10.5281/zenodo.23400424) |
+| When the Backtest Lies | 21 data and measurement errors that make a backtest look better or worse than reality, each found in practice | [10.5281/zenodo.23400720](https://doi.org/10.5281/zenodo.23400720) |
+| Same Strategy, Two Results | 11 sources of divergence between a backtest and the live bot running the same strategy code | [10.5281/zenodo.23400828](https://doi.org/10.5281/zenodo.23400828) |
+| Seven Trading Ideas, One Protocol | Seven ideas put through one validation protocol on 16 years of gold futures; none is accepted | [10.5281/zenodo.23400954](https://doi.org/10.5281/zenodo.23400954) |
+| Scheduled Flows in Crypto | Funding settlements, ETF flows and options expiries leave measurable price footprints, too small to trade at taker fees | [10.5281/zenodo.23401075](https://doi.org/10.5281/zenodo.23401075) |
+
 ## Research notes
 
-The write-ups are the main point of this repository; the code exists to make
-their results reproducible.
+Shorter write-ups kept in this repository:
 
 | Note | Finding |
 |---|---|
 | [Separating real edge from overfit: surrogate tests on gold](docs/writeups/01-edge-vs-overfit.md) | On 470k one-minute XAUUSD returns, directional autocorrelation is indistinguishable from shuffled noise (z = −2.2) while volatility clustering is overwhelming (z = +278). A gallery of ideas that looked profitable until a specific test killed them. |
+| [How much can a strategy book lose?](docs/writeups/03-book-risk.md) | On a nine-strategy gold book the realised drawdown sits at the 90th percentile of an IID Monte Carlo but the 40th of a block bootstrap: there are no losing streaks, but the expected return drifts between regimes. Drawdown units, diversification, joint losses, window dependence and daily VaR/ES. |
+| [Value-at-Risk for gold: six models, fourteen years](docs/writeups/04-gold-var.md) | One-day VaR/ES for gold futures, backtested over 3,666 days with Kupiec, Christoffersen and an ES test. Historical simulation fails on timing, RiskMetrics on tails, GARCH-t on the short side; only a HAR model of intraday realised variance passes on both sides. Two crash days beat every model by 1.4–3.7×. |
 | [Backtest–live parity: one model, two runtimes](docs/writeups/02-backtest-live-parity.md) | How the backtest and the live bot are kept making the same decisions on the same prices, and the bugs that broke parity — each one now pinned by a test. |
 
 ## What is in here
 
 | Package | Purpose |
 |---|---|
-| [`src/research/`](src/research) | Permutation (shuffle-surrogate) tests, triple-barrier labelling, purged k-fold and walk-forward CV with embargo, block-bootstrap Monte Carlo of drawdown and risk of ruin |
+| [`src/research/`](src/research) | Permutation (shuffle-surrogate) tests, triple-barrier labelling, purged k-fold and walk-forward CV with embargo, block-bootstrap Monte Carlo of drawdown and risk of ruin, one-day VaR/ES models (HS, EWMA, GARCH-t, filtered HS, HAR realised variance) with Kupiec / Christoffersen / ES backtests |
 | [`src/backtesting/`](src/backtesting) | Candle-by-candle engine with optional tick-level SL/TP resolution, per-instrument cost models, drawdown-episode analysis, rejection reports |
 | [`src/strategies/`](src/strategies) | `BaseStrategy` contract, strategy manager, two demo strategies |
 | [`src/execution/`](src/execution) | Live signal lifecycle (entry → partial TPs → trailing/breakeven → exit), MT5 / Bybit / mock connectors, position recovery after restart |

@@ -7,7 +7,8 @@
     Description : Research-rigor toolkit — the statistical machinery used to tell
                   a real, exploitable edge from overfit. Permutation/surrogate
                   tests, triple-barrier labelling, leakage-free (purged) cross-
-                  validation, and Monte Carlo drawdown / risk-of-ruin.
+                  validation, Monte Carlo drawdown / risk-of-ruin, and
+                  one-day VaR / ES models with their backtests.
 
     SPDX-License-Identifier: AGPL-3.0
 
@@ -17,6 +18,14 @@ from src.research.cross_validation import PurgedKFold, purged_walk_forward_cv, w
 from src.research.labeling import cusum_events, ewm_vol, triple_barrier
 from src.research.monte_carlo import DrawdownMC, equity_curve, max_drawdown_pct, monte_carlo_dd
 from src.research.permutation import PermutationResult, permutation_test
+from src.research.var import (
+    ForecastConfig,
+    backtest_table,
+    christoffersen_independence,
+    es_exceedance_test,
+    kupiec_pof,
+    rolling_forecasts,
+)
 
 __all__ = [
     # permutation / surrogate
@@ -35,4 +44,11 @@ __all__ = [
     "DrawdownMC",
     "max_drawdown_pct",
     "equity_curve",
+    # value-at-risk / expected shortfall
+    "rolling_forecasts",
+    "backtest_table",
+    "ForecastConfig",
+    "kupiec_pof",
+    "christoffersen_independence",
+    "es_exceedance_test",
 ]
