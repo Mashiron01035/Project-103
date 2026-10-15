@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, type-check & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction
+
+      - name: Format check (black)
+        run: poetry run black --check src tests scripts
+
+      - name: Import order (isort)
+        run: poetry run isort --check-only src tests scripts
+
+      - name: Lint (ruff)
+        run: poetry run ruff check src tests scripts
+
+      # Large legacy surface is not fully typed yet (disallow_untyped_defs = false);
+      # mypy runs for signal but does not block the build. Tighten per-package over time.
+      - name: Type check (mypy, non-blocking)
+        run: poetry run mypy src
+        continue-on-error: true
+
+      - name: Tests (pytest)
+        run: poetry run pytest tests/ -q

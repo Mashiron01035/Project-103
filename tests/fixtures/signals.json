@@ -1,0 +1,126 @@
+{
+  "valid_buy_signals": [
+    {
+      "id": "signal-001",
+      "timestamp": 1704067200000,
+      "symbol": "BTCUSDT",
+      "strategy_name": "trend_following",
+      "timeframe": "15m",
+      "side": "BUY",
+      "confidence": 0.85,
+      "strength": 4,
+      "entry_price": 95000.0,
+      "stop_loss": 94000.0,
+      "take_profit": [96000.0, 97000.0, 98000.0],
+      "risk_reward_ratio": 2.0,
+      "position_size_percent": 1.0,
+      "indicators_snapshot": {
+        "rsi": 28.5,
+        "ema_20": 94500.0,
+        "macd_histogram": 50.0
+      },
+      "metadata": {
+        "reason": "oversold_bounce",
+        "market_condition": "trending"
+      }
+    },
+    {
+      "id": "signal-002",
+      "timestamp": 1704153600000,
+      "symbol": "ETHUSDT",
+      "strategy_name": "momentum",
+      "timeframe": "15m",
+      "side": "BUY",
+      "confidence": 0.75,
+      "strength": 3,
+      "entry_price": 2200.0,
+      "stop_loss": 2150.0,
+      "take_profit": [2300.0, 2350.0],
+      "risk_reward_ratio": 2.0,
+      "position_size_percent": 1.0,
+      "indicators_snapshot": {
+        "rsi": 35.0,
+        "ema_20": 2180.0
+      },
+      "metadata": {
+        "reason": "momentum_shift"
+      }
+    }
+  ],
+  "valid_sell_signals": [
+    {
+      "id": "signal-003",
+      "timestamp": 1704240000000,
+      "symbol": "BTCUSDT",
+      "strategy_name": "trend_following",
+      "timeframe": "15m",
+      "side": "SELL",
+      "confidence": 0.80,
+      "strength": 4,
+      "entry_price": 98000.0,
+      "stop_loss": 99000.0,
+      "take_profit": [97000.0, 96000.0, 95000.0],
+      "risk_reward_ratio": 2.0,
+      "position_size_percent": 1.0,
+      "indicators_snapshot": {
+        "rsi": 75.5,
+        "ema_20": 97500.0
+      },
+      "metadata": {
+        "reason": "overbought_reversal"
+      }
+    }
+  ],
+  "invalid_signals": [
+    {
+      "id": "invalid-001",
+      "timestamp": 1704067200000,
+      "symbol": "BTCUSDT",
+      "side": "BUY",
+      "confidence": 0.3,
+      "entry_price": 95000.0,
+      "stop_loss": 96000.0,
+      "take_profit": [94000.0],
+      "reason": "low_confidence_and_wrong_sl_tp"
+    },
+    {
+      "id": "invalid-002",
+      "timestamp": 1704067200000,
+      "symbol": "BTCUSDT",
+      "side": "BUY",
+      "confidence": 0.75,
+      "entry_price": 95000.0,
+      "stop_loss": 96000.0,
+      "take_profit": [97000.0],
+      "reason": "sl_above_entry_for_buy"
+    }
+  ],
+  "executed_signals": [
+    {
+      "id": "exec-001",
+      "symbol": "BTCUSDT",
+      "side": "BUY",
+      "entry_price": 95000.0,
+      "executed_at": 1704067300000,
+      "executed_price": 95050.0,
+      "slippage": 0.0005,
+      "result": "WIN",
+      "exit_price": 97000.0,
+      "pnl": 200.0,
+      "pnl_percent": 2.1
+    },
+    {
+      "id": "exec-002",
+      "symbol": "ETHUSDT",
+      "side": "SELL",
+      "entry_price": 2300.0,
+      "executed_at": 1704153700000,
+      "executed_price": 2298.0,
+      "slippage": 0.0009,
+      "result": "LOSS",
+      "exit_price": 2350.0,
+      "pnl": -52.0,
+      "pnl_percent": -2.3
+    }
+  ]
+}

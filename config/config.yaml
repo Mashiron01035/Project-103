@@ -1,0 +1,171 @@
+# Trading Bot Configuration
+# Secrets (API keys, tokens) are in .env — never commit .env
+
+# ------------------------------------------------------------------------------
+# TRADING
+# ------------------------------------------------------------------------------
+
+signal_pairs: [XAUUSD]
+
+# Demo portfolio: two structurally different reference strategies.
+#   session_breakout — opening-range breakout (market entry, momentum)
+#   swing_fade       — mean-reversion fade at swing pivots (limit entry)
+active_strategies:
+  - session_breakout
+  - swing_fade
+
+# Replay recent candles through strategies at startup so session ranges,
+# indicator state and per-day counters are ready when the first live candle lands.
+warmup:
+  enabled: true
+  lookback_candles: 5000
+  min_indicator_warmup: 310    # first N candles only stabilise indicators, no analyze()
+
+# ------------------------------------------------------------------------------
+# APPLICATION
+# ------------------------------------------------------------------------------
+
+mode: paper            # paper | production
+environment: development
+debug: false
+log_level: INFO
+
+# ------------------------------------------------------------------------------
+# EXCHANGES
+# ------------------------------------------------------------------------------
+
+bybit:
+  testnet: true
+  rate_limit: 50
+  timeout: 30
+  retries: 3
+
+binance:
+  testnet: true
+  rate_limit: 50
+  timeout: 30
+  retries: 3
+
+exchange:
+  testnet: true
+  rate_limit: 50
+  timeout: 30
+  retries: 3
+
+multi_connector:
+  enabled: false
+  connectors:
+    bybit:
+      enabled: true
+      is_default: true
+    binance:
+      enabled: false
+      is_default: false
+    mt5:
+      enabled: false
+      symbols: []
+      prefixes: [XAU, XAG]
+
+# ------------------------------------------------------------------------------
+# FEES
+# ------------------------------------------------------------------------------
+
+fees:
+  maker_fee: 0.0002
+  taker_fee: 0.00055
+  slippage: 0
+  use_tiered: false
+
+# ------------------------------------------------------------------------------
+# RISK MANAGEMENT  (conservative demo defaults — tune for your own use)
+# ------------------------------------------------------------------------------
+
+risk:
+  account_balance: 10000.0
+  max_risk_per_trade: 0.01
+  max_position_percent: 1
+  max_daily_drawdown: 0.1
+  max_positions: 10
+  leverage: 10
+  max_leverage: 20
+  hedge_mode: true
+
+  daily_profit_target_enabled: false
+  daily_profit_target_percent: 5.0
+  daily_target_mode: stop_new  # stop_new | close_all | close_profitable
+
+  position_sizing_method: fixed_fractional  # fixed_fractional (position = risk) | fixed_balance (position = balance)
+  stop_loss_type: dynamic
+  atr_multiplier: 3.5
+  trailing_stop_enabled: true
+  trailing_stop_distance: 0.01
+
+  risk_reward_normal:
+    low: 2.0
+    medium: 2.5
+    high: 3.0
+
+  dynamic_risk:
+    enabled: false
+    ranging_multiplier: 0.5
+    trending_multiplier: 1.0
+    high_vol_multiplier: 0.75
+
+# ------------------------------------------------------------------------------
+# MONITORING
+# ------------------------------------------------------------------------------
+
+monitoring:
+  dashboard_enabled: false
+  dashboard_port: 8080
+  alert_on_signal: true
+  alert_on_trade: true
+  alert_on_error: true
+  daily_report_time: "22:00"
+  metrics_interval: 60
+  health_check_interval: 30
+
+# ------------------------------------------------------------------------------
+# TELEGRAM
+# ------------------------------------------------------------------------------
+
+telegram:
+  enabled: false
+
+# ------------------------------------------------------------------------------
+# DATABASE
+# ------------------------------------------------------------------------------
+
+database:
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+  echo: false
+
+# ------------------------------------------------------------------------------
+# REDIS
+# ------------------------------------------------------------------------------
+
+redis:
+  max_connections: 50
+  decode_responses: true
+  socket_timeout: 5
+
+# ------------------------------------------------------------------------------
+# PERFORMANCE
+# ------------------------------------------------------------------------------
+
+performance:
+  max_workers: 4
+  event_loop_interval: 0.1
+  cache_ttl: 300
+  batch_size: 100
+  queue_size: 10000
+
+# ------------------------------------------------------------------------------
+# LOGGING
+# ------------------------------------------------------------------------------
+
+logging:
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: logs/trading_bot.log

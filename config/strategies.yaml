@@ -1,0 +1,91 @@
+# Strategy configuration — public reference build.
+# Two structurally different demo strategies on NEUTRAL defaults
+# (not tuned for any live edge):
+#   session_breakout — opening-range breakout, market entry, momentum
+#   swing_fade       — fade first session swing, limit-at-pivot, mean-reversion
+
+# ---- Global limit-entry mechanics (used by swing_fade) ----
+limit_entry:
+  enabled: false           # swing_fade opts in via its own use_limit_entry flag
+  timeout_candles: 15
+  price_offset_percent: 0.0
+  maker_fee: 0.0002
+  taker_fee: 0.00055
+
+
+# ============================================================
+# session_breakout — opening-range breakout (market entry)
+# ============================================================
+session_breakout:
+  enabled: true
+  pairs: [XAUUSD]
+  timeframes: [1m]
+  min_confidence: 0.30
+  max_positions: 5
+  position_sizing_method: fixed_fractional
+  risk_per_trade: 0.01
+
+  # Session timing (UTC)
+  session_start_hour: 8
+  range_minutes: 30
+  session_end_hour: 15
+
+  # Entry
+  breakout_buffer_atr: 0.3
+  min_range_atr: 0.5
+  max_range_atr: 4.0
+
+  # Risk
+  atr_period: 14
+  sl_buffer_atr: 1.0
+  tp_rr_ratio: 2.0
+  trailing_callback_atr: 0.3
+
+  # Filters
+  use_asgma_filter: false
+  use_ema_filter: true
+  ema_period: 200
+  max_trades_per_session: 1
+  require_candle_confirm: false
+  long_only: false
+  short_only: false
+  skip_friday: false
+  skip_saturday: true
+  skip_sunday: true
+
+  use_daily_loss_limit: false
+  daily_loss_limit_pct: 10.0
+
+
+# ============================================================
+# swing_fade — fade first ZigZag swing (limit-at-pivot entry)
+# ============================================================
+swing_fade:
+  enabled: true
+  pairs: [XAUUSD]
+  timeframes: [1m]
+  min_confidence: 0.50
+  max_positions: 1
+  position_sizing_method: fixed_fractional
+  risk_per_trade: 0.01
+
+  # ZigZag swing detection
+  swing_threshold: 10.0
+
+  # Entry window (UTC hours, [start, end))
+  window_start_hour: 13
+  window_end_hour: 17
+
+  # Risk (price units)
+  stop_dollars: 5.0
+  target_dollars: 20.0
+  limit_fill_timeout_min: 15
+  max_hold_minutes: 240
+
+  # Direction / mechanics
+  trade_direction: both
+  max_trades_per_day: 5
+  stop_target_reference: entry
+  use_limit_entry: true
+  cancel_on_limit_timeout: true
+  signal_confidence: 0.7

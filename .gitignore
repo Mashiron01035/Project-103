@@ -37,10 +37,6 @@ env/
 obsidian/
 .obsidian/
 
-# Claude
-claude/
-.claude/
-
 # IDE
 .venv/
 .idea/
@@ -65,12 +61,15 @@ logs/
 secrets/
 credentials/
 config/google-sheets.json
+config/google_sheets_credentials.json
+config/accounts.yaml
+config/*.local.yaml
 
-# Poetry
-*.lock
+# Poetry — keep poetry.lock committed (reproducible installs); do NOT ignore it
 
 # Data
 data/trading.db
+*.db
 data/wal/signals.wal
 
 *.parquet
@@ -79,6 +78,7 @@ data/wal/signals.wal
 
 # Claude
 CLAUDE.md
+.claude/
 
 # Trading specific
 positions.json
@@ -89,5 +89,7 @@ state.json
 
 # Results
 results/
+notes/
 
 nul
+

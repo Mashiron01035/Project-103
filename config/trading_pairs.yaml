@@ -1,0 +1,70 @@
+# =============================================================================
+# Trading pairs — per-instrument contract specs used for sizing, PnL and fees.
+# =============================================================================
+# contract_size     units per 1.0 lot (XAUUSD: 100 oz). PnL = Δprice · qty · contract_size
+# commission_type   "per_lot" ($ per lot, per side — forex/CFD) or "percentage"
+#                   (fraction of notional — crypto, taken from maker/taker fees)
+# quantity_step     lot rounding step; min/max_quantity bound the order size
+#
+# Symbols missing here fall back to crypto-style defaults (contract_size 1,
+# percentage fees) — add a block before backtesting a new CFD/forex symbol.
+# Values are typical retail ECN specs; adjust to your broker.
+# =============================================================================
+
+XAUUSD:
+  symbol: XAUUSD
+  base_asset: XAU
+  quote_asset: USD
+  contract_size: 100
+  commission_type: per_lot
+  commission_per_lot: 6.0
+  min_quantity: 0.01
+  max_quantity: 20.0
+  quantity_step: 0.01
+  tick_size: 0.01
+  price_precision: 2
+  quantity_precision: 2
+  is_active: true
+
+EURUSD:
+  symbol: EURUSD
+  base_asset: EUR
+  quote_asset: USD
+  contract_size: 100000
+  commission_type: per_lot
+  commission_per_lot: 6.0
+  min_quantity: 0.01
+  max_quantity: 50.0
+  quantity_step: 0.01
+  tick_size: 0.00001
+  price_precision: 5
+  quantity_precision: 2
+  is_active: true
+
+BTCUSDT:
+  symbol: BTCUSDT
+  base_asset: BTC
+  quote_asset: USDT
+  contract_size: 1
+  commission_type: percentage
+  min_quantity: 0.001
+  max_quantity: 100.0
+  quantity_step: 0.001
+  tick_size: 0.1
+  price_precision: 1
+  quantity_precision: 3
+  is_active: true
+
+ETHUSDT:
+  symbol: ETHUSDT
+  base_asset: ETH
+  quote_asset: USDT
+  contract_size: 1
+  commission_type: percentage
+  min_quantity: 0.01
+  max_quantity: 1000.0
+  quantity_step: 0.01
+  tick_size: 0.01
+  price_precision: 2
+  quantity_precision: 2
+  is_active: true

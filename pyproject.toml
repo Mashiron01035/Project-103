@@ -1,0 +1,173 @@
+[tool.poetry]
+name = "project-103"
+version = "0.1.0"
+description = "Systematic trading research framework: surrogate tests, purged CV, execution-accurate backtesting and an MT5/Bybit live runtime"
+authors = ["Mashiron <mashiron@tuta.io>"]
+license = "AGPL-3.0"
+readme = "README.md"
+packages = [
+    { include = "src" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# --- Configuration & data models ---
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+python-dotenv = "^1.0.0"
+pyyaml = "^6.0.1"
+
+# --- Numerical / data ---
+numpy = "^2.2.6"
+polars = "^1.41.2"          # backtest data loader (native parquet cache)
+pandas = "^2.1.4"           # engine HTF bridge (resample/ewm); hot path is polars + numpy
+scipy = "^1.11.4"           # performance metrics (Sharpe) + Monte Carlo
+matplotlib = "^3.8.0"       # equity curve + Monte Carlo plots
+
+# --- Storage (paper/live use Postgres + Redis; backtest runs on CSV) ---
+sqlalchemy = "^2.0.23"
+asyncpg = "^0.30.0"         # PostgreSQL async driver
+psycopg2-binary = "^2.9.9"  # PostgreSQL sync driver
+redis = "^5.0.1"            # cache / message bus
+
+# --- Async networking (exchange connectors & data providers) ---
+aiohttp = "^3.9.1"
+
+# --- Security ---
+cryptography = "^43.0.0"    # Fernet symmetric encryption for stored credentials (utils/crypto.py)
+
+# --- Ops ---
+psutil = "^5.9.0"           # health checks (CPU / memory / disk)
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.12.0"
+black = "^23.12.1"
+isort = "^5.13.2"
+ruff = "^0.15.0"
+mypy = "^1.7.1"
+ipython = "^8.18.1"
+ipdb = "^0.13.13"
+pre-commit = "^3.6.0"
+
+[tool.poetry.scripts]
+bot = "src.main:main"
+test = "pytest:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# =============================================================================
+# Tool Configurations
+# =============================================================================
+
+[tool.black]
+line-length = 100
+target-version = ['py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | __pycache__
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_any_unimported = false
+ignore_missing_imports = true
+follow_imports = "silent"
+show_error_codes = true
+no_implicit_optional = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--strict-markers",
+    "--tb=short",
+    "--asyncio-mode=auto",
+    "-vv"
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "asyncio: mark test as async",
+    "slow: mark test as slow running",
+    "integration: mark test as integration test",
+    "e2e: mark test as end-to-end test",
+    "database: mark test as requiring database",
+    "redis: mark test as requiring redis",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = [".git", "__pycache__", "build", "dist", ".venv", ".idea", "cache", "data", "logs"]
+
+[tool.ruff.lint]
+# E/W = pycodestyle, F = pyflakes (the flake8 rule set, with autofix).
+select = ["E", "W", "F"]
+# E501 line length is owned by black (it won't wrap strings/log messages);
+# E203 conflicts with black's slice formatting.
+ignore = ["E501", "E203"]
+
+[tool.ruff.lint.per-file-ignores]
+# scripts bootstrap sys.path before importing src/ -> imports legitimately not at top.
+"scripts/*" = ["E402"]
+# package __init__ files re-export symbols (imported-but-unused is intentional).
+"__init__.py" = ["F401"]
+
+[tool.pylint.messages_control]
+disable = [
+    "C0111",  # missing-docstring
+    "C0103",  # invalid-name
+    "R0903",  # too-few-public-methods
+    "R0913",  # too-many-arguments
+    "W0622",  # redefined-builtin
+]
+
+[tool.pylint.format]
+max-line-length = 100

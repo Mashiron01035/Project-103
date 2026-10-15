@@ -1,0 +1,361 @@
+services:
+  # =============================================================================
+  # Trading Bot
+  # =============================================================================
+  trading-bot:
+    build:
+      context: .
+      target: runtime
+    container_name: trading-bot
+    profiles:
+      - prod
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://trader:trader@postgres:5432/project103
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=production
+      - BOT_MODE=${BOT_MODE:-paper}
+      - BOT_EXCHANGE=${BOT_EXCHANGE:-bybit}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DASHBOARD_ENABLED=${DASHBOARD_ENABLED:-true}
+      - TELEGRAM_ENABLED=${TELEGRAM_ENABLED:-true}
+      - MT5_HOST=mt5
+      - MT5_PORT=8001
+    command: >
+      python -m src.main
+      --mode ${BOT_MODE:-paper}
+      --exchange ${BOT_EXCHANGE:-bybit}
+      --log-level ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./config:/app/config  # NOT read-only - allows runtime config changes
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./reports:/app/reports
+    depends_on:
+      mt5:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      timescaledb-setup:
+        condition: service_completed_successfully
+    networks:
+      - trading-network
+    ports:
+      - "8000:8000"  # API
+      - "8080:8080"  # Dashboard
+
+  # =============================================================================
+  # Trading Bot Dev
+  # =============================================================================
+  trading-bot-dev:
+    build:
+      context: .
+      target: development
+    container_name: trading-bot-dev
+    profiles:
+      - dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://trader:trader@postgres:5432/project103
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - BOT_MODE=${BOT_MODE:-paper}
+      - BOT_EXCHANGE=${BOT_EXCHANGE:-bybit}
+      - DEBUG=true
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DASHBOARD_ENABLED=${DASHBOARD_ENABLED:-true}
+      - TELEGRAM_ENABLED=${TELEGRAM_ENABLED:-true}
+      - MT5_HOST=mt5
+      - MT5_PORT=8001
+      # For debugpy (remote debugging)
+      - PYTHONBREAKPOINT=debugpy.breakpoint
+    command: >
+      python -m src.main
+      --mode ${BOT_MODE:-paper}
+      --exchange ${BOT_EXCHANGE:-bybit}
+      --log-level ${LOG_LEVEL:-INFO}
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./reports:/app/reports
+      - ./.env:/app/.env:ro
+    depends_on:
+      mt5:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading-network
+    ports:
+      - "8000:8000"  # API
+      - "8080:8080"  # Dashboard
+      - "5678:5678"  # Python debugger (debugpy)
+    stdin_open: true   # docker attach support
+    tty: true          # colored output
+
+  # =============================================================================
+  # Trading Bot Test Runner - runs the tests
+  # =============================================================================
+  test-runner:
+    build:
+      context: .
+      target: testing
+    container_name: trading-bot-tests
+    profiles:
+      - test
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://trader:trader@postgres:5432/project103_test
+      - REDIS_URL=redis://redis:6379/1
+      - ENVIRONMENT=testing
+      - MODE=backtest
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./reports:/app/reports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - trading-network
+
+  # =============================================================================
+  # PostgreSQL with TimescaleDB
+  # =============================================================================
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: trading-timescaledb
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=trader
+      - POSTGRES_PASSWORD=trader
+      - POSTGRES_DB=project103
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    command: >
+      postgres
+      -c shared_buffers=2GB
+      -c effective_cache_size=4GB
+      -c work_mem=64MB
+      -c maintenance_work_mem=512MB
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trader -d project103"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      
+  # =============================================================================
+  # Data Collector - collects market data into TimescaleDB
+  # =============================================================================
+  # Run: docker compose up -d data-collector
+  # Runs independently of trading-bot, restart: always
+  # =============================================================================
+
+  data-collector:
+    build:
+      context: .
+      target: runtime
+    container_name: data-collector
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://trader:trader@postgres:5432/project103
+      # COLLECTOR_SYMBOLS - optional, if not set reads from config.yaml active_pairs
+      - COLLECT_ORDERBOOK=true
+      - COLLECT_TICKERS=true
+      - COLLECT_CANDLES=true
+      - COLLECT_TRADES=true
+      - ORDERBOOK_DEPTH=50
+      - BATCH_SIZE=100
+      - FLUSH_INTERVAL=1.0
+      - WS_URL=wss://stream.bybit.com/v5/public/linear
+    command: python -m services.data_collector.main
+    volumes:
+      - ./services:/app/services
+      - ./config:/app/config:ro
+      - ./logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      timescaledb-setup:
+        condition: service_completed_successfully
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import asyncpg; print('ok')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # =============================================================================
+  # TimescaleDB Setup - extension initialization
+  # =============================================================================
+  timescaledb-setup:
+    image: timescale/timescaledb:latest-pg16
+    container_name: timescaledb-setup
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - trading-network
+    entrypoint: |
+      bash -c "
+        export PGPASSWORD=trader
+        psql -h postgres -U trader -d project103 -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;'
+        psql -h postgres -U trader -d project103 -c 'CREATE EXTENSION IF NOT EXISTS pg_stat_statements;'
+      "
+
+
+
+  # =============================================================================
+  # Redis - cache and message broker
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: trading-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 4096mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - trading-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # Grafana - monitoring and visualization
+  # =============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: trading-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=redis-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config:/etc/grafana/provisioning:ro
+      - ./config:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - trading-network
+    depends_on:
+      - prometheus
+
+  # =============================================================================
+  # Prometheus - metrics collection
+  # =============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: trading-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - trading-network
+
+  # =============================================================================
+  # PgAdmin - PostgreSQL management
+  # =============================================================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: trading-pgadmin
+    profiles:
+      - tools
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@example.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_LISTEN_PORT=80
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - trading-network
+    depends_on:
+      - postgres
+
+  # =============================================================================
+  # RedisInsight - Redis management
+  # =============================================================================
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: trading-redis-insight
+    profiles:
+      - tools
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    networks:
+      - trading-network
+    volumes:
+      - redis-insight-data:/db
+    depends_on:
+      - redis
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  trading-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  mt5-config:
+    driver: local
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  grafana-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  redis-insight-data:
+    driver: local

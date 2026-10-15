@@ -1,0 +1,65 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+.eggs
+*.egg-info
+*.egg
+.mypy_cache
+.pytest_cache
+.coverage
+htmlcov
+.tox
+.nox
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Docker
+.docker
+docker-compose*.yml
+Dockerfile*
+
+# Logs and data (mounted as volumes)
+logs/
+data/
+reports/
+*.log
+
+# Local config
+tests/.env
+.env.*
+!tests/.env.example
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+# Tests
+tests/
+*.test.py
+conftest.py
+
+# Documentation
+docs/
+*.md
+LICENSE
+
+# Temp files
+tmp/
+temp/
+*.tmp
+*.bak
